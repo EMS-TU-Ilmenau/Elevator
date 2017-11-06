@@ -21,22 +21,29 @@ class Positioner:
 		self.tarStartPos = tarStartPos
 		self.diameter = diameter
 		self.dev = None
-		# open serial port
+		# connect to motor and turn on
+		self.connect()
+		self.turnOn()
+	
+	def __del__(self):
+		# close connection properly when destructing the instance
+		self.disconnect()
+	
+	def connect(self):
+		'''Connect to serial port'''
 		try:
 			self.dev = serial.Serial(port, 9600, timeout=5)
 		except:
 			raise IOError('Cannot connect to elevator')
-		
+		# identify axis
 		while True:
 			name = self.send('*IDN?')
 			if name:
 				break
 		log.info('Connection opened to elevator via {}'.format(name))
-		# turn motor power on
-		self.turnOn()
 	
-	def __del__(self):
-		# close connection properly when destructing the instance
+	def disconnect(self):
+		'''Disconnect from serial port'''
 		if self.dev:
 			self.dev.close()
 	
