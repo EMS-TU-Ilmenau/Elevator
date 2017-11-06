@@ -22,14 +22,14 @@ class Positioner:
 		self.diameter = diameter
 		self.dev = None
 		# connect to motor and turn on
-		self.connect()
+		self.connect(port)
 		self.turnOn()
 	
 	def __del__(self):
 		# close connection properly when destructing the instance
 		self.disconnect()
 	
-	def connect(self):
+	def connect(self, port):
 		'''Connect to serial port'''
 		try:
 			self.dev = serial.Serial(port, 9600, timeout=5)
