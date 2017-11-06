@@ -124,7 +124,7 @@ class Positioner:
 				time.sleep(0.01)
 				self.send('AX{}:POS {:.2f}'.format(self.id, posDeg)) # set position
 			# something is kaputt
-			if notThereCnt > 200:
+			if notThereCnt > 100:
 				log.error('Position cannot not be reached ({} deg is, {} deg should)'.format(isRot, posDeg))
 				break
 	
