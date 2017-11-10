@@ -92,9 +92,6 @@ class Positioner:
 			log.debug('Wait for homing done. Last reply: {}'.format(done))
 			if done == 1:
 				break
-		
-		# set position to reference
-		self.tarStartPos = 0.
 	
 	def moveToPos(self, pos, vel=0.01):
 		'''moves the target to a new position
