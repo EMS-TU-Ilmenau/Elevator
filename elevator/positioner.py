@@ -86,7 +86,7 @@ class Positioner:
 		# set max rate, then search home
 		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, self.len2rot(vel)))
 		time.sleep(0.01)
-		self.send('AX{}:HOME -1')
+		self.send('AX{}:HOME -1'.format(self.id))
 		log.info('Homing')
 		
 		# wait until home found
