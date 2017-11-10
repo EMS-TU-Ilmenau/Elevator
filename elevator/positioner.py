@@ -78,19 +78,23 @@ class Positioner:
 		self.send('AX{}:POW OFF'.format(self.id))
 	
 	def home(self, vel=0.01):
-		'''moves in negative position until the reference (0) is found.'''
-		log.info('Homing')
+		'''moves in negative position until the reference is found.'''
+		if int(self.send('AX{}:HOME?'.format(self.id))):
+			log.info('Already at home')
+			return
+		
 		# set max rate, then search home
 		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, self.len2rot(vel)))
 		time.sleep(0.01)
 		self.send('AX{}:HOME -1')
+		log.info('Homing')
 		
 		# wait until home found
 		while True:
 			time.sleep(0.1)
-			done = int(self.send('AX{}:HOME?'.format(self.id)))
-			log.debug('Wait for homing done. Last reply: {}'.format(done))
-			if done == 1:
+			onHome = int(self.send('AX{}:HOME?'.format(self.id)))
+			log.debug('Wait for homing done. Last reply: {}'.format(onHome))
+			if onHome == 1:
 				break
 	
 	def moveToPos(self, pos, vel=0.01):
