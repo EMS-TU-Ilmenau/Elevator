@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
 	name='elevator',
-	version='0.0.1',
+	version='0.0.2',
 	author='Niklas Beuster',
 	author_email='niklas.beuster@tu-ilmenau.de',
 	description=('Python interface for a linear actuator with serial interface'),
