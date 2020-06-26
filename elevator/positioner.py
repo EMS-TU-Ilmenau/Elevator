@@ -35,12 +35,7 @@ class Positioner:
 			self.dev = serial.Serial(port, 9600, timeout=5)
 		except:
 			raise IOError('Cannot connect to elevator')
-		# identify axis
-		while True:
-			name = self.send('*IDN?')
-			if name:
-				break
-		log.info('Connection opened to elevator via {}'.format(name))
+		log.info('Connection opened to elevator')
 	
 	def disconnect(self):
 		'''Disconnect from serial port'''
@@ -66,6 +61,7 @@ class Positioner:
 		Note: this will reset the motors internal position state!'''
 		log.info('Turning motor power on')
 		self.send('AX{}:POW ON'.format(self.id))
+		time.sleep(0.01)
 		resp = self.send('AX{}:POW?'.format(self.id))
 		if 'ON' in resp:
 			log.debug('Motor is ready')
