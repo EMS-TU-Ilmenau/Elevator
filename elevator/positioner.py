@@ -56,12 +56,16 @@ class Positioner:
 		'''returns: rotation angle for path-length l'''
 		return 360.0*l/(math.pi*self.diameter)
 	
+	def rot2len(self, r):
+		'''returns: path-length for rotation angle r'''
+		return r*math.pi*self.diameter/360.0
+	
 	def turnOn(self):
 		'''Turns motor power on.
 		Note: this will reset the motors internal position state!'''
 		log.info('Turning motor power on')
 		self.send('AX{}:POW ON'.format(self.id))
-		time.sleep(0.01)
+		time.sleep(0.05)
 		resp = self.send('AX{}:POW?'.format(self.id))
 		if 'ON' in resp:
 			log.debug('Motor is ready')
@@ -81,7 +85,7 @@ class Positioner:
 		
 		# set max rate, then search home
 		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, self.len2rot(vel)))
-		time.sleep(0.01)
+		time.sleep(0.05)
 		self.send('AX{}:HOME -1'.format(self.id))
 		log.info('Homing')
 		
@@ -93,43 +97,46 @@ class Positioner:
 			if onHome == 1:
 				break
 	
-	def moveToPos(self, pos, vel=0.01):
+	def moveToPos(self, pos, vel=0.01, block=True):
 		'''moves the target to a new position
 		:param pos: new target position in meters
 		:param vel: speed in m/s to move to the position'''
 		log.info('Moving target to {} m with {} mm/s'.format(pos, vel*1000))
 		# calculations
-		posDeg = self.len2rot(pos-self.tarStartPos)
-		velDeg = self.len2rot(vel)
+		tarRot = self.len2rot(pos-self.tarStartPos)
+		rate = self.len2rot(vel)
 		
 		# move to position
-		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, velDeg)) # set rate
-		time.sleep(0.01)
-		self.send('AX{}:POS {:.2f}'.format(self.id, posDeg)) # set position
+		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, rate)) # set rate
+		time.sleep(0.05)
+		self.send('AX{}:POS {:.2f}'.format(self.id, tarRot)) # set position
+		
+		if not block:
+			return
 		
 		# make sure that the motor reached their positions
 		notThereCnt = 0
 		while True:
 			notThereCnt += 1
-			isRot = self.getRot()
-			delta = abs(posDeg-isRot)
+			curRot = self.getRot()
+			delta = abs(tarRot-curRot)
 			if delta < 1.:
 				log.debug('Position reached')
 				break
-			log.debug('Motor still not on position ({} deg is, {} deg should)'.format(isRot, posDeg))
-			duration = delta/velDeg+0.05
+			log.debug('Motor still not on position ({} deg is, {} deg should)'.format(curRot, tarRot))
+			duration = delta/rate+0.05
 			log.debug('Waiting {:.2f} s for motors to reach position...'.format(duration))
 			time.sleep(duration)
 			# check for serious problem
 			if notThereCnt == 20:
 				log.warning('Re-sending position')
 				# re-send strings
-				self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, velDeg)) # set rate
-				time.sleep(0.01)
-				self.send('AX{}:POS {:.2f}'.format(self.id, posDeg)) # set position
+				self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, rate)) # set rate
+				time.sleep(0.05)
+				self.send('AX{}:POS {:.2f}'.format(self.id, tarRot)) # set position
 			# something is kaputt
 			if notThereCnt > 100:
-				log.error('Position cannot not be reached ({} deg is, {} deg should)'.format(isRot, posDeg))
+				log.error('Position cannot not be reached ({} deg is, {} deg should)'.format(curRot, tarRot))
 				break
 	
 	def getRot(self):
@@ -138,3 +145,8 @@ class Positioner:
 		while not resp:
 			resp = self.send('AX{}:POS?'.format(self.id))
 		return float(resp)
+	
+	def getPos(self):
+		''':returns: current target on platform position in m'''
+		rot = self.getRot()
+		return self.rot2len(rot)+self.tarStartPos
