@@ -60,6 +60,24 @@ class Positioner:
 		'''returns: path-length for rotation angle r'''
 		return r*math.pi*self.diameter/360.0
 	
+	@property
+	def acceleration(self):
+		''':returns: acceleration value (no units)'''
+		return int(self.send('AX{}:ACC?'.format(self.id)))
+	
+	@acceleration.setter
+	def acceleration(self, val):
+		self.send('AX{}:ACC {}'.format(self.id, int(val)))
+	
+	@property
+	def deceleration(self):
+		''':returns: deceleration value (no units)'''
+		return int(self.send('AX{}:DEC?'.format(self.id)))
+	
+	@deceleration.setter
+	def deceleration(self, val):
+		self.send('AX{}:DEC {}'.format(self.id, int(val)))
+	
 	def turnOn(self):
 		'''Turns motor power on.
 		Note: this will reset the motors internal position state!'''
@@ -86,6 +104,9 @@ class Positioner:
 		# set max rate, then search home
 		self.send('AX{}:LIM:MAX {:.2f}'.format(self.id, self.len2rot(vel)))
 		time.sleep(0.05)
+		oldAcc = self.acceleration
+		self.acceleration = 100 # to instantly drive to home position
+		time.sleep(0.05)
 		self.send('AX{}:HOME -1'.format(self.id))
 		log.info('Homing')
 		
@@ -96,6 +117,8 @@ class Positioner:
 			log.debug('Wait for homing done. Last reply: {}'.format(onHome))
 			if onHome == 1:
 				break
+		
+		self.acceleration = oldAcc
 	
 	def moveToPos(self, pos, vel=0.01, block=True):
 		'''moves the target to a new position
